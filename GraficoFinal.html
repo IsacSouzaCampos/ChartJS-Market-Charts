@@ -99,6 +99,8 @@
         tension: 0.4,  // arredondamento (suavização) dos cantos do gráfico
         pointRadius: 0,  // raio dos pontos do dataset = 0
         pointHitRadius: 30,  // raio onde os pontos do dataset são captados pela seta do mouse
+        pointHoverRadius: 0,  // remove o círculo que aparece quando posiciona a seta em cima dos pontos do gráfico
+        borderWidth: 1,  // reduz a espessura da linha do gráfico
       }]
     };
 
@@ -108,18 +110,42 @@
       beforeDatasetsDraw(chart, args, pluginOptions) {
         const {ctx, data, chartArea: {left, right, width}, scales: {x, y}} = chart;
 
-        y_position = y.getPixelForValue(data.datasets[0].data[0]);
+        const yStartingPoint = data.datasets[0].data[0];
+        const yStartingPixel = y.getPixelForValue(yStartingPoint);
 
         ctx.save();
+
+        // inicia a criação de um "desenho" novo (linha pontilhada / ponto inicial)
         ctx.beginPath();
         ctx.lineWidth = 1;
         ctx.setLineDash([1, 5]);
-        ctx.strokeStyle = 'rgba(102, 102, 102, 1)';
-        ctx.moveTo(left, y_position);
-        ctx.lineTo(right, y_position);
+        ctx.strokeStyle = 'rgba(102, 102, 102, 1)';  // cor da linha
+        ctx.moveTo(left, yStartingPixel);
+        ctx.lineTo(right, yStartingPixel);
         ctx.stroke();
         ctx.closePath();
         ctx.setLineDash([]);
+
+        const labelWidth = left;
+        const labelHeight = 18;
+        const labelX = 0;
+        const labelY = yStartingPixel - (labelHeight / 2);
+
+        // inicia a criação do label que indica o valor de y na linha pontilhada
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(102, 102, 102, .85)';  // cor do background
+        ctx.fillRect(labelX, labelY, labelWidth, labelHeight);  // cria retângulo preenchido com cor definida em fillStyle
+        ctx.closePath();
+
+        const fontX = labelWidth / 2;
+        const fontY = yStartingPixel;
+
+        // configura a fonte da label
+        ctx.font = '12px sans-serif';
+        ctx.fillStyle = 'white';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText(yStartingPoint, fontX, fontY);
       }
     }
 
@@ -128,6 +154,11 @@
       type: 'line',
       data,
       options: {
+        layout: {
+          padding: {
+            left: 10  // aumenta o espaço à esquerda do início do gráfico (para aumentar a largura da label do y inicial)
+          }
+        },
         scales: {
           y: {
             beginAtZero: true

@@ -220,6 +220,21 @@
       return gradientBackground;
     }
 
+    myChart.canvas.addEventListener('mousemove', (e) => {
+      crosshairLine(myChart, e);
+    });
+
+    function crosshairLine(chart, mousemove) {
+      const {canvas, chartArea: {left, right, top, bottom}} = chart;
+      const {offsetX, offsetY} = mousemove;
+
+      if((offsetX > left) && (offsetX < right) && (offsetY > top) && (offsetY < bottom)) {
+        canvas.style.cursor = 'crosshair';
+      } else {
+        canvas.style.cursor = 'default';
+      }
+    }
+
     </script>
 
   </body>

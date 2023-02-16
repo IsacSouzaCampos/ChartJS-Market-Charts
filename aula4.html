@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Getting Started with Chart JS with www.chartjs3.com</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+      }
+      .chartMenu {
+        width: 100vw;
+        height: 40px;
+        background: #1A1A1A;
+        color: rgba(54, 162, 235, 1);
+      }
+      .chartMenu p {
+        padding: 10px;
+        font-size: 20px;
+      }
+      .chartCard {
+        width: 100vw;
+        height: calc(100vh - 40px);
+        background: rgba(54, 162, 235, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chartBox {
+        width: 700px;
+        padding: 20px;
+        border-radius: 20px;
+        border: solid 3px rgba(54, 162, 235, 1);
+        background: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chartMenu">
+      <p>WWW.CHARTJS3.COM (Chart JS 4.2.0)</p>
+    </div>
+    <div class="chartCard">
+      <div class="chartBox">
+        <canvas id="myChart"></canvas>
+      </div>
+    </div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+    <script>
+    // setup 
+    const data = {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        label: 'Weekly Sales',
+        data: [9.33, 12, 6, 9, 12, 3, 9],
+        backgroundColor: [
+          'rgba(255, 26, 104, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)',
+          'rgba(0, 0, 0, 0.2)'
+        ],
+        fill: {
+          target: {
+            value: 9.33
+          },
+          below: (context) => { // Define as cores da borda (linha do gráfico)
+            const chart = context.chart;
+            const { ctx, chartArea, data, scales } = chart;
+
+            if(!chartArea) {
+                return null;
+            }
+            return belowGradient(ctx, chartArea, data, scales);  // pega a cor gradiente do gráfico
+          },
+          above: (context) => { // Define as cores da borda (linha do gráfico)
+            const chart = context.chart;
+            const { ctx, chartArea, data, scales } = chart;
+
+            if(!chartArea) {
+                return null;
+            }
+            return aboveGradient(ctx, chartArea, data, scales);  // pega a cor gradiente do gráfico
+          }
+        },
+        borderColor: (context) => { // Define as cores da borda (linha do gráfico)
+            // console.log(context);
+            const chart = context.chart;
+            const { ctx, chartArea, data, scales } = chart;
+
+            if(!chartArea) {
+                return null;
+            }
+            return getGradient(ctx, chartArea, data, scales);  // pega a cor gradiente do gráfico
+        },
+        tension: 0.4,  // arredondamento (suavização) dos cantos do gráfico
+        pointRadius: 0,  // raio dos pontos do dataset = 0
+        pointHitRadius: 0,  // raio onde os pontos do dataset são captados pela seta do mouse
+        pointHoverRadius: 0,  // remove o círculo que aparece quando posiciona a seta em cima dos pontos do gráfico
+        borderWidth: 1,  // reduz a espessura da linha do gráfico
+      }]
+    };
+
+    // dottedLine plugin block
+    const dottedLine = {
+      id: 'dottedLine',
+      beforeDatasetsDraw(chart, args, pluginOptions) {
+        const {ctx, data, chartArea: {left, right, width}, scales: {x, y}} = chart;
+
+        const yStartingPoint = data.datasets[0].data[0];
+        const yStartingPixel = y.getPixelForValue(yStartingPoint);
+
+        ctx.save();
+
+        // inicia a criação de um "desenho" novo (linha pontilhada / ponto inicial)
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.setLineDash([1, 5]);
+        ctx.strokeStyle = 'rgba(102, 102, 102, 1)';  // cor da linha
+        ctx.moveTo(left, yStartingPixel);
+        ctx.lineTo(right, yStartingPixel);
+        ctx.stroke();
+        ctx.closePath();
+        ctx.setLineDash([]);
+
+        const labelWidth = left;
+        const labelHeight = 18;
+        const labelX = 0;
+        const labelY = yStartingPixel - (labelHeight / 2);
+
+        // inicia a criação do label que indica o valor de y na linha pontilhada
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(102, 102, 102, .85)';  // cor do background
+        ctx.fillRect(labelX, labelY, labelWidth, labelHeight);  // cria retângulo preenchido com cor definida em fillStyle
+        ctx.closePath();
+
+        const fontX = labelWidth / 2;
+        const fontY = yStartingPixel;
+
+        // configura a fonte da label
+        ctx.font = '12px sans-serif';
+        ctx.fillStyle = 'white';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText(yStartingPoint, fontX, fontY);
+      }
+    }
+
+    // config 
+    const config = {
+      type: 'line',
+      data,
+      options: {
+        layout: {
+          padding: {
+            left: 10  // aumenta o espaço à esquerda do início do gráfico (para aumentar a largura da label do y inicial)
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: {
+            display: false  // remove a legenda de topo
+          }
+        }
+      },
+      plugins: [dottedLine]
+    };
+
+    // render init block
+    const myChart = new Chart(
+      document.getElementById('myChart'),
+      config
+    );
+
+    function getGradient(ctx, chartArea, data, scales) {
+      const {left, right, top, bottom, width, height} = chartArea;
+      const {x, y} = scales;
+      const gradientBorder = ctx.createLinearGradient(0, 0, 0, bottom);
+      const shift = y.getPixelForValue(data.datasets[0].data[0]) / bottom;
+
+      // Define a cor da metade superior do gráfico, que vai de 0% de distância do topo até shift
+      gradientBorder.addColorStop(0, 'rgba(75, 192, 192, 1)');
+      gradientBorder.addColorStop(shift, 'rgba(75, 192, 192, 1)');
+
+      // Define a cor da metade inferior do gráfico, que vai de shift de distância do topo até 100%
+      gradientBorder.addColorStop(shift, 'rgba(255, 26, 104, 1)');
+      gradientBorder.addColorStop(1, 'rgba(255, 26, 104, 1)');
+
+      return gradientBorder;
+    }
+
+    function belowGradient(ctx, chartArea, data, scales) {
+      const {left, right, top, bottom, width, height} = chartArea;
+      const {x, y} = scales;
+      const y_start = y.getPixelForValue(data.datasets[0].data[0]);
+      const gradientBackground = ctx.createLinearGradient(0, y_start, 0, bottom);
+
+      gradientBackground.addColorStop(0, 'rgba(255, 26, 104, 0)');
+      gradientBackground.addColorStop(1, 'rgba(255, 26, 104, .5)');
+
+      return gradientBackground;
+    }
+
+    function aboveGradient(ctx, chartArea, data, scales) {
+      const {left, right, top, bottom, width, height} = chartArea;
+      const {x, y} = scales;
+      const y_start = y.getPixelForValue(data.datasets[0].data[0]);
+      const gradientBackground = ctx.createLinearGradient(0, y_start, 0, top);
+
+      gradientBackground.addColorStop(0, 'rgba(75, 192, 192, 0)');
+      gradientBackground.addColorStop(1, 'rgba(75, 192, 192, .5)');
+
+      return gradientBackground;
+    }
+
+    myChart.canvas.addEventListener('mousemove', (e) => {
+      crosshairLine(myChart, e);
+    });
+
+    function crosshairLine(chart, mousemove) {
+      const {canvas, ctx, chartArea: {left, right, top, bottom}} = chart;
+      const {offsetX, offsetY} = mousemove;
+
+      chart.update('none'); 
+
+      if((offsetX > left) && (offsetX < right) && (offsetY > top) && (offsetY < bottom)) {
+        canvas.style.cursor = 'crosshair';
+      } else {
+        canvas.style.cursor = 'default';
+      }
+
+      ctx.strokeStyle = '#666';  // cor da linha
+      ctx.lineWidth = 1;  // largura da linha
+      ctx.setLineDash([3, 3]);  // 3 pixeis sólidos e 3 "transparentes"
+
+      ctx.beginPath();
+      // Horizontal line
+      if((offsetY > top) && (offsetY < bottom)) {
+        ctx.moveTo(left, offsetY);
+        ctx.lineTo(right, offsetY);
+        ctx.stroke();
+      }
+
+      // Vertical line
+      if((offsetX > left) && (offsetX < right)) {
+        ctx.moveTo(offsetX, top);
+        ctx.lineTo(offsetX, bottom);
+        ctx.stroke();
+      }
+      ctx.closePath();
+    }
+
+    </script>
+
+  </body>
+</html>

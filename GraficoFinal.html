@@ -180,7 +180,7 @@
     );
 
     function getGradient(ctx, chartArea, data, scales) {
-      const {left, right, top, bottom, width, height} = chartArea;
+      const {left, right, top, bottom, width, height} = chartArea;  // Object Destructuring
       const {x, y} = scales;
       const gradientBorder = ctx.createLinearGradient(0, 0, 0, bottom);
       const shift = y.getPixelForValue(data.datasets[0].data[0]) / bottom;
@@ -225,7 +225,7 @@
     });
 
     function crosshairLine(chart, mousemove) {
-      const {canvas, ctx, chartArea: {left, right, top, bottom}} = chart;
+      const {canvas, ctx, chartArea: {left, right, top, bottom}} = chart;  // Object Destructuring
       const {offsetX, offsetY} = mousemove;
 
       chart.update('none'); 
@@ -246,6 +246,8 @@
         ctx.moveTo(left, offsetY);
         ctx.lineTo(right, offsetY);
         ctx.stroke();
+        
+        crosshairLabel(chart, mousemove);
       }
 
       // Vertical line
@@ -254,7 +256,32 @@
         ctx.lineTo(offsetX, bottom);
         ctx.stroke();
       }
+
       ctx.closePath();
+    }
+
+    function crosshairLabel(chart, mousemove) {
+      const {ctx, chartArea: {left}, scales: {y}} = chart;  // Object Destructuring
+      const {offsetX, offsetY} = mousemove;
+
+      // Label que mostra valor de y na posição da seta do mouse
+      const labelWidth = left;
+      const labelHeight = 18;
+      const labelX = 0;
+      const labelY = offsetY - (labelHeight / 2);
+
+      ctx.fillStyle = 'rgba(132, 132, 132, 1)';  // cor do background
+      ctx.fillRect(labelX, labelY, labelWidth, labelHeight);  // cria retângulo preenchido com cor definida em fillStyle
+
+      const fontX = labelWidth / 2;
+      const fontY = offsetY;
+
+      // configura a fonte da label
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = 'white';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      ctx.fillText(y.getValueForPixel(offsetY).toFixed(2), fontX, fontY);
     }
 
     </script>
